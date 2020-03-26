@@ -1,0 +1,14 @@
+env/
+.env
+db.sqlite3
+drugs_side_effect/__pycache__/
+common_service/__pycache__/
+common_service/migrations/__pycache__/
+idea/
+drugs_uri/__pycache__/
+drugs_uri/migrations/__pycache__/
+craft_text_detection/__pycache__/
+craft_text_detection/basenet/__pycache__/
+crnn/models/__pycache__/
+crnn/.DS_Store
+crnn/__pycache__/

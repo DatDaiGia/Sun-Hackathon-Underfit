@@ -1,0 +1,376 @@
+<!doctype html>
+<head>
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+   <title>RnD.Underfit's Drugs' Interactions Lookup</title>
+</head>
+
+<style>
+   h1 {
+      text-align: center;
+      margin-top: 50px;
+      margin-bottom: 20px;
+      font-size: 40px;
+   }
+
+   code {
+      display: block;
+      white-space: pre-wrap
+   }
+
+   .btn {
+      border: 1px solid black;
+   }
+
+   #btn-submit:hover {
+      background-position: right center;
+      color: darkslategrey;
+   }
+
+   #btn-submit {
+      transition: 0.5s;
+      background-size: 200% auto;
+      background-image: linear-gradient(to right, #84fab0 0%, #8fd3f4 51%, #84fab0 100%);
+      color: black;
+      border: none;
+      margin: 1em 0em;
+   }
+
+   .options {
+      padding: 1em;
+      border-radius: 5px;
+      transition: opacity .2s, box-shadow .2s;
+   }
+
+   .selected {
+      box-shadow: 0 2px 0px 0px red;
+      margin-right: 1em;
+   }
+
+   .unselected:hover {
+      cursor: pointer;
+   }
+
+   img {
+      width: 100%;
+      height: auto;
+      max-height: auto;
+      border-radius: 5%;
+      position: absolute;
+      z-index: 1000;
+      opacity: 0;
+      box-shadow: 0 0 10px 1px #2f2f2f;
+      transition: opacity .2s;
+   }
+
+   .disclaimer {
+      margin-top: 2em;
+      padding: 1.5em 2em 1em 2em;
+      border-radius: 2em;
+      background-color: #eeeeee;
+   }
+   
+   th, td {
+      padding: 10px;
+      border-top: 1px solid #ccc;
+   }
+
+   .color-major::before {
+      font-family: "Webdings";
+      content: "=  ";
+      color: red;
+   }
+
+   .color-major {
+      color: #b71c1c;
+   }
+
+   .color-moderate::before {
+      font-family: "Webdings";
+      content: "=  ";
+      color: #f57c00;
+   }
+
+   .color-moderate {
+      color: #a23900;
+   }
+
+   .color-minor::before {
+      font-family: "Webdings";
+      content: "=  ";
+      color: #fbc02d;
+   }
+
+   .color-minor {
+      color: #8a6600;
+   }
+
+   .color-unknown::before {
+      font-family: "Webdings";
+      content: "=  ";
+      color: grey;
+   }
+
+   .color-unknown {
+      color: #484848;
+   }
+</style>
+
+<html>
+
+<body>
+   <h1>
+      Sun* RnD.Underfit's Health Portal
+   </h1>
+
+   <div class="container">
+      <div class="row justify-content-center" style="padding-bottom:2em;">
+         <div class="col-md-auto options selected">
+            <code>Tìm tương tác thuốc</code>
+            &emsp;theo danh sách thuốc hoặc ảnh.<br>
+         </div>
+         <div class="col-md-auto options unselected" onmouseenter="on_hover()" onmouseleave="on_out()" onclick="window.location.href='sidefx'">
+            <code>Tìm tác dụng phụ</code>
+            &emsp;theo một tên thuốc bất kỳ.<br>
+         </div>
+      </div>
+
+      <form action="/index" method="POST" enctype="multipart/form-data">
+         <div class="row">
+            <div id="image-entry" class="col-md-6">
+               {% csrf_token %}
+               <div class="row">Tải lên ảnh thuốc hoặc đơn thuốc...</div>
+               <div class="row" style="margin: 1em 0em;">
+                  <button type="button" class="btn-primary col-md-6" onclick="pic_choose(this)">Chọn ảnh tải lên</button>
+                  <input type="file" style="display:none" accept="image/*" onchange="upload_to_cancel(this)"/>
+
+                  <button type="button" class="btn-secondary col-md input-img-type prescription" value="prescription" onclick="toggle_type(this)" style="margin-left:1em">Đơn thuốc</button>
+
+                  <button type="button" class="btn col-md-auto" style="margin-left:1em;" onclick="add_row(this, 'image-entry')">+</button>
+               </div>
+               <img class="row" />
+            </div>
+
+            <div id="text-entry" class="col-md-6">
+               <div class="row">... hoặc nhập tên thuốc:</div>
+               <div class="row" style="margin: 1em 0em;">
+                  <input type="text" class="form-control col-md" name="drug_name" placeholder="nhập tên thuốc vào đây." autofocus>
+                  <button type="button" class="btn col-md-auto" style="margin-left:1em;" onclick="add_row(this, 'text-entry')">+</button>
+               </div>
+            </div>
+         </div>
+
+         <div class="row justify-content-center">
+            <button type="submit" class="btn col-md-auto" id="btn-submit">&nbspSubmit&nbsp</button>
+         </div>
+      </form>
+
+      <h4>Output:</h4>
+      <div class="col-md-9 offset-md-1">
+         <code id="output">Các tương tác thuốc sẽ được liệt kê ra đây.</code>
+      </div>
+
+
+      <div class="disclaimer">
+         <h4>Phân loại tương tác thuốc:</h4>
+         <caption>Các phân loại trên đây chỉ dùng để tham khảo. Tương tác giữa các loại thuốc với từng cá nhân cụ thể rất khó để có thể xác định được chính xác. Luôn luôn xin tư vấn của nhà cung cấp dịch vụ sức khoẻ trước khi bắt đầu hay kết thúc một liều thuốc.</caption>
+         <table style="margin-top: 10px">
+            <tr>
+               <th scope="row" class="text-nowrap">
+                  <span class="color-major">Nghiêm trọng</span>
+               </th>
+               <td>Tương tác đáng kể. Tránh sử dụng cùng lúc nếu có thể.</td>
+            </tr> 
+            <tr>
+               <th scope="row" class="text-nowrap">
+                  <span class="color-moderate">Tương đối</span>
+               </th>
+               <td>Tương tác tương đối. Chỉ nên sử dụng cùng lúc khi cấp thiết.</td>
+            </tr> 
+            <tr>
+               <th scope="row" class="text-nowrap">
+                  <span class="color-minor">Nhẹ</span>
+               </th>
+               <td>Tương tác thuốc nhẹ. Cần tối thiểu rủi ro, có thể đổi thuốc, hoặc/và phòng ngừa tương tác.</td>
+            </tr> 
+            <tr>
+               <th scope="row" class="text-nowrap">
+                  <span class="color-unknown">Không biết</span>
+               </th>
+               <td>Không tồn tại thông tin liên quan đên tương tác.</td>
+            </tr>
+         </table>
+      </div>
+
+
+   </div>
+
+   <script type="text/javascript">
+      $('#btn-submit').on('click', function(event) {
+         event.preventDefault();
+         let form = document.getElementsByTagName("form")[0];
+         let elem = document.getElementById('output');
+         var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+         let drugs = [];
+         let files = [];
+         let value = "";
+
+         for (let e of form.elements) {
+            if (e.tagName === "INPUT") {
+               if (e.type === "text") {
+                  value = e.value;
+                  if (e.value !== "")
+                     drugs.push(value);
+               }
+            }
+         }
+         
+         /* elem.innerHTML = "các thuốc đã được nhập:<ul>";
+         for (value of drugs)
+            elem.innerHTML += ("<li>"+value+"</li>");
+         elem.innerHTML += "</ul><br>"
+         elem.innerHTML += "các ảnh đã được nhập:<ul>";
+         for (value of files)
+            elem.innerHTML += ("<li>"+value+"</li>");
+         elem.innerHTML += "</ul>" */
+
+         var formData = new FormData();
+         formData.append('drugs', drugs);
+         formData.append('files', $('input[type=file]')[0].files[0]);
+         formData.append('img_type', $('.input-img-type').val());
+         formData.append('csrfmiddlewaretoken', csrfToken);
+
+         $.ajax({
+            url: '/index',
+            data: formData,
+            type: 'POST',
+            contentType: false,
+            processData: false,
+            success: function(response) {
+               $('#output').html(response.interactions[0].content);
+            },
+            error: function(error) {
+               console.log(error)
+            }
+         })
+      })
+
+      function on_hover() {
+         let elems = document.getElementsByClassName('selected');
+         for (let elem of elems) {
+            elem.style["box-shadow"] = "none";
+            elem.style.opacity = 0.3;
+         }
+       elem = document.getElementsByClassName('unselected')[0];
+       elem.style["box-shadow"] = "0 2px 0px 0px red";
+      }
+
+      function on_out() {
+         let elems = document.getElementsByClassName('selected');
+         for (let elem of elems) {
+            elem.style["box-shadow"] = "0 2px 0px 0px red";
+            elem.style.opacity = 1;
+         }
+         elem = document.getElementsByClassName('unselected')[0];
+         elem.style["box-shadow"] = "none";
+      }
+
+      function add_row(elem, box) {
+         elem.removeAttribute("onclick");
+         elem.setAttribute("onclick", "delete_row(this)");
+         elem.innerHTML = "x";
+
+         let container = document.createElement("div");
+         container.classList.add("row");
+         container.style.margin = "1em 0em"
+
+         if (box === "text-entry") {
+            container.innerHTML =
+               `<input type="text" class="form-control col-md" name="drug_name" placeholder="nhập tên thuốc vào đây." autofocus>
+               <button type="button" class="btn col-md-auto" style="margin-left:1em" onclick="add_row(this, '` + box + "')\">+</button>";
+         }
+         if (box === "image-entry") {
+            container.innerHTML =
+               `
+                  <button type="button" class="btn-primary col-md-6" onclick="pic_choose(this)" onmouseenter="show_image(this)" onmouseleave="hide_image(this)">Chọn ảnh tải lên</button>
+                  <input type="file" style="display:none" accept="image/*" onchange="upload_to_cancel(this)"/>
+
+                  <button type="button" class="btn-secondary col-md prescription" onclick="toggle_type(this)" style="margin-left:1em">Đơn thuốc</button>
+
+                  <button type="button" class="btn col-md-auto" style="margin-left:1em;" onclick="add_row(this, 'image-entry')">+</button>
+               `;
+         }
+
+         document.getElementById(box).appendChild(container);
+
+         if (box === "image-entry") {
+            container = document.createElement("img");
+            container.classList.add("row");
+            container.style.display = "none";
+            document.getElementById(box).appendChild(container);
+         }
+      }
+
+      function delete_row(elem) {
+         elem.parentNode.outerHTML = "";
+      }
+
+      function pic_choose(elem) {
+         elem.nextElementSibling.click();
+      }
+
+      function toggle_type(elem) {
+         if (elem.classList.contains("prescription")) {
+            elem.classList.remove("prescription");
+            elem.classList.add("actual-pill");
+            elem.innerText = "Vỉ/viên thuốc";
+            elem.value = "actual-pill";
+         }
+         else {
+            elem.classList.add("prescription");
+            elem.classList.remove("actual-pill");
+            elem.innerText = "Đơn thuốc";
+            elem.value = "prescription";
+         }
+      }
+
+      function upload_to_cancel(elem) {
+         let btn = elem.previousElementSibling;
+         btn.classList.remove("btn-primary");
+         btn.classList.add("btn-danger");
+         btn.innerText = "Huỷ ảnh đã nhận";
+         btn.removeAttribute("onclick");
+         btn.setAttribute("onclick", "cancel_to_upload(this)");
+         btn.setAttribute("onmouseenter", "show_image(this)");
+         btn.setAttribute("onmouseleave", "hide_image(this)");
+
+         btn.parentNode.nextElementSibling.src = URL.createObjectURL(elem.files[0]);
+      }
+
+      function cancel_to_upload(elem) {
+         elem.nextElementSibling.value = "";
+         elem.classList.add("btn-primary");
+         elem.classList.remove("btn-danger");
+         elem.innerText = "Chọn ảnh tải lên";
+         elem.removeAttribute("onclick");
+         elem.setAttribute("onclick", "pic_choose(this)");
+         elem.removeAttribute("onmouseleave");
+         elem.removeAttribute("onmouseenter");
+         
+         let img = elem.parentNode.nextElementSibling
+         img.src = "";
+         img.style.opacity = 0;
+
+      }
+
+      function show_image(elem) {
+         elem.parentNode.nextElementSibling.style.opacity = 1;
+      }
+
+      function hide_image(elem) {
+         elem.parentNode.nextElementSibling.style.opacity = 0;
+      }
+   </script>
+</body>
+
+</html>

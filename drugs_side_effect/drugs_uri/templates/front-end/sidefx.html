@@ -1,0 +1,129 @@
+<!doctype html>
+<head>
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+   <title>RnD.Underfit's Drugs' Side Effects Lookup</title>
+</head>
+
+<style>
+   h1 {
+      text-align: center;
+      margin-top: 50px;
+      margin-bottom: 20px;
+      font-size: 40px;
+   }
+
+   code {
+      display: block;
+      white-space: pre-wrap
+   }
+
+   .btn:hover {
+      background-position: right center;
+      color: darkslategrey;
+   }
+
+   .btn {
+      transition: 0.5s;
+      background-size: 200% auto;
+      background-image: linear-gradient(to right, #84fab0 0%, #8fd3f4 51%, #84fab0 100%);
+      color: black;
+   }
+
+   .options {
+      padding: 1em;
+      border-radius: 5px;
+      transition: opacity .2s, box-shadow .2s;
+   }
+
+   .selected {
+      box-shadow: 0 2px 0px 0px red;
+   }
+
+   .unselected {
+      margin-right: 1em;
+   }
+
+   .unselected:hover {
+      cursor: pointer;
+   }
+</style>
+
+<html>
+
+<body>
+   <h1>
+      Sun* RnD.Underfit's Health Portal
+   </h1>
+
+   <div class="container">
+      <div class="row justify-content-center" style="padding-bottom:2em;">
+         <div class="col-md-auto options unselected" onmouseenter="on_hover()" onmouseleave="on_out()" onclick="window.location.href='conflict'">
+            <code>Tìm tương tác thuốc</code>
+            &emsp;theo danh sách thuốc hoặc ảnh.<br>
+         </div>
+         <div class="col-md-auto options selected">
+            <code>Tìm tác dụng phụ</code>
+            &emsp;theo một tên thuốc bất kỳ.<br>
+         </div>
+      </div>
+
+      <form action="javascript:submit()" method="GET">
+         {% csrf_token %}
+         <div class="row" style="margin: 1em 1em;">
+            <div class="col-md">
+               <input type="text" class="form-control col-md" name="drug_name" placeholder="nhập tên thuốc vào đây." autofocus required>
+            </div>
+            <button type="submit" class="btn col-md-auto" style="margin-bottom:16px;">&nbspNhập&nbsp</button>
+         </div>
+      </form>
+
+      <h4>Output:</h4>
+      <div class="col-md-9 offset-md-1">
+         <code id="output">Các tác dụng phụ sẽ được liệt kê ra đây.</code>
+      </div>
+   </div>
+   <script type="text/javascript">
+      function submit(event) {
+         let elem = document.getElementById('output');
+         let drug_name = $('input[name="drug_name"]').val();
+         elem.innerText = "đã nhận: \"" + drug_name + "\"";
+
+         $.ajax({
+            type: 'GET',
+            data: {
+               'drug_name': drug_name, 
+               'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            success: function(response) {
+               $('#output').append(response.side_effects);
+            },
+            error: function(error) {
+               console.log(error)
+            }
+         })
+      }
+
+      function on_hover() {
+         let elems = document.getElementsByClassName('selected');
+         for (let elem of elems) {
+            elem.style["box-shadow"] = "none";
+            elem.style.opacity = 0.3;
+         }
+       elem = document.getElementsByClassName('unselected')[0];
+       elem.style["box-shadow"] = "0 2px 0px 0px red";
+      }
+
+      function on_out() {
+         let elems = document.getElementsByClassName('selected');
+         for (let elem of elems) {
+            elem.style["box-shadow"] = "0 2px 0px 0px red";
+            elem.style.opacity = 1;
+         }
+         elem = document.getElementsByClassName('unselected')[0];
+         elem.style["box-shadow"] = "none";
+      }
+   </script>
+</body>
+
+</html>

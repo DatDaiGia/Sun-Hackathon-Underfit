@@ -1,0 +1,74 @@
+{% load static %}
+
+<!doctype html>
+<head>
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+   <title>RnD.Underfit's Hackathon 2019</title>
+   <script type="text/javascript">
+      function on_hover(that) {
+         let elems = document.getElementsByClassName('options');
+         for (let elem of elems) {
+            if (elem != that) {
+               elem.style["box-shadow"] = "none";
+               elem.style.opacity = 0.3;
+            }
+         }
+         that.style["box-shadow"] = "0 2px 0px 0px red";
+         that.opacity = 1;
+      }
+      function on_out() {
+         let elems = document.getElementsByClassName('options');
+         for (let elem of elems) {
+            elem.style["box-shadow"] = "none";
+            elem.style.opacity = 1;
+         }
+      }
+   </script>
+</head>
+
+<style>
+   h1 {
+      text-align: center;
+      margin-top: 50px;
+      margin-bottom: 20px;
+      font-size: 40px;
+   }
+
+   code {
+      display: block;
+      white-space: pre-wrap
+   }
+
+   .options {
+      padding: 1em;
+      border-radius: 5px;
+      transition: opacity .2s, box-shadow .2s;
+      cursor: pointer;
+   }
+</style>
+
+<html>
+
+<body>
+   <h1>
+      Sun* RnD.Underfit's Health Portal
+   </h1>
+
+   <div class="container">
+      <div class="row justify-content-center" style="padding-bottom:2em;">
+         <div class="col-md-auto options" onmouseenter="on_hover(this)" onmouseleave="on_out()" onclick="window.location.href='conflict'" style="margin-right: 1em;">
+            <code>Tìm tương tác thuốc</code>
+            &emsp;theo danh sách thuốc hoặc ảnh.<br>
+         </div>
+         <div class="col-md-auto options" onmouseenter="on_hover(this)" onmouseleave="on_out()" onclick="window.location.href='sidefx'">
+            <code>Tìm tác dụng phụ</code>
+            &emsp;theo một tên thuốc bất kỳ.<br>
+         </div>
+      </div>
+
+      <p align="center" style="font-family: monospace">Hãy chọn chức năng bạn muốn sử dụng.</p>
+   </div>
+
+</body>
+
+</html>
